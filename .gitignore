@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+node_modules/
+vendor/
+coverage/
+dist/
+*.log
