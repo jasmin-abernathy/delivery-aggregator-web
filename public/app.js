@@ -1,329 +1,194 @@
 (() => {
   'use strict';
 
-  const restaurants = Array.isArray(window.DEMO_RESTAURANTS) ? window.DEMO_RESTAURANTS : [];
-  const ALLOWED_PLATFORM_HOSTS = {
-    'uber-eats': ['ubereats.com', 'www.ubereats.com'],
-    'deliveroo': ['deliveroo.fr', 'www.deliveroo.fr', 'deliveroo.com', 'www.deliveroo.com'],
-    'too-good-to-go': ['toogoodtogo.com', 'www.toogoodtogo.com'],
-    'le-fourgon': ['lefourgon.com', 'www.lefourgon.com']
+  const STORAGE_KEY = 'sansEffort.observations.v1';
+  const MAX_OBSERVATIONS = 100;
+  const FRESH_MS = 2 * 60 * 60 * 1000;
+  const PLATFORMS = {
+    'uber-eats': { label: 'Uber Eats', hosts: ['ubereats.com'] },
+    deliveroo: { label: 'Deliveroo', hosts: ['deliveroo.fr', 'deliveroo.com'] }
   };
-  const STORAGE_KEY = 'deliveryAggregator.preferences.v1';
+  const form = document.querySelector('#offerForm');
+  const formError = document.querySelector('#formError');
+  const storageStatus = document.querySelector('#storageStatus');
+  const list = document.querySelector('#comparisonList');
+  const emptyState = document.querySelector('#emptyState');
+  const filterInput = document.querySelector('#filterInput');
+  const comparisonStatus = document.querySelector('#comparisonStatus');
+  let observations = [];
+  let storageAvailable = true;
 
-  const elements = {
-    form: document.querySelector('#searchForm'),
-    query: document.querySelector('#searchInput'),
-    platformChecks: [...document.querySelectorAll('input[name="platform"]')],
-    fulfillmentChecks: [...document.querySelectorAll('input[name="fulfillment"]')],
-    categoryChecks: [...document.querySelectorAll('input[name="category"]')],
-    uberOne: document.querySelector('#uberOne'),
-    deliverooPlus: document.querySelector('#deliverooPlus'),
-    favoritesOnly: document.querySelector('#favoritesOnly'),
-    cards: document.querySelector('#cards'),
-    resultCount: document.querySelector('#resultCount'),
-    emptyState: document.querySelector('#emptyState'),
-    clearFilters: document.querySelector('#clearFilters'),
-    resetLocal: document.querySelector('#resetLocal'),
-    preferenceNote: document.querySelector('#preferenceNote')
-  };
+  function readStorage() {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : [];
+      observations = Array.isArray(parsed) ? parsed.filter(isValidObservation).slice(0, MAX_OBSERVATIONS) : [];
+    } catch (_) {
+      observations = [];
+      storageAvailable = false;
+    }
+  }
 
-  const state = {
-    query: '',
-    platforms: new Set(),
-    fulfillmentModes: new Set(),
-    categories: new Set(),
-    favoritesOnly: false,
-    subscriptions: { uberOne: false, deliverooPlus: false },
-    favorites: new Set(),
-    storageAvailable: true
-  };
+  function isValidObservation(item) {
+    return item && typeof item.id === 'string' && typeof item.scenario === 'string'
+      && typeof item.merchant === 'string' && Object.hasOwn(PLATFORMS, item.platform)
+      && Number.isFinite(item.total) && item.total > 0 && Number.isFinite(Date.parse(item.createdAt));
+  }
 
-  function normalizeText(value) {
-    return String(value || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLocaleLowerCase('fr-FR')
-      .trim();
+  function persist() {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(observations));
+      storageAvailable = true;
+    } catch (_) {
+      storageAvailable = false;
+    }
+    storageStatus.textContent = storageAvailable
+      ? 'Enregistré dans ce navigateur.'
+      : 'Stockage local indisponible : garde cette page ouverte pour conserver la comparaison.';
+    storageStatus.classList.toggle('storage-warning', !storageAvailable);
   }
 
   function escapeHtml(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
+    return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[character]);
   }
 
-  function formatMoney(value) {
-    if (!Number.isFinite(value)) return 'Non renseigné';
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(value);
-  }
-
-  function formatEta(value) {
-    if (!Array.isArray(value) || value.length !== 2 || !value.every(Number.isFinite)) return 'Non renseigné';
-    return `${value[0]}–${value[1]} min`;
-  }
-
-  function loadLocalState() {
+  function safeOfferUrl(value, platform) {
+    if (!value) return '';
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw);
-      state.subscriptions.uberOne = saved?.subscriptions?.uberOne === true;
-      state.subscriptions.deliverooPlus = saved?.subscriptions?.deliverooPlus === true;
-      state.favorites = new Set(Array.isArray(saved?.favorites) ? saved.favorites.filter(id => typeof id === 'string') : []);
-    } catch (error) {
-      state.storageAvailable = false;
+      const url = new URL(value);
+      const hosts = PLATFORMS[platform].hosts;
+      if (url.protocol !== 'https:' || !hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) return '';
+      return url.href;
+    } catch (_) {
+      return '';
     }
   }
 
-  function saveLocalState() {
-    if (!state.storageAvailable) return false;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        subscriptions: state.subscriptions,
-        favorites: [...state.favorites]
-      }));
-      return true;
-    } catch (error) {
-      state.storageAvailable = false;
-      updatePreferenceNote();
-      return false;
-    }
+  function normalize(value) {
+    return String(value).trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('fr');
   }
 
-  function clearLocalState() {
-    state.subscriptions = { uberOne: false, deliverooPlus: false };
-    state.favorites.clear();
-    state.favoritesOnly = false;
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-      state.storageAvailable = true;
-    } catch (error) {
-      state.storageAvailable = false;
-    }
-    syncControlsFromState();
-    render();
+  function formatMoney(amount) {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
   }
 
-  function updatePreferenceNote() {
-    const active = [];
-    if (state.subscriptions.uberOne) active.push('Uber One');
-    if (state.subscriptions.deliverooPlus) active.push('Deliveroo Plus');
-
-    if (!state.storageAvailable) {
-      elements.preferenceNote.textContent = 'Le stockage local est indisponible : vos abonnements et favoris fonctionnent pour cette session, mais ne survivront pas au rechargement. Aucun prix n’est recalculé.';
-      return;
-    }
-
-    elements.preferenceNote.textContent = active.length
-      ? `Préférences enregistrées localement : ${active.join(' + ')}. Elles restent informatives et ne modifient aucun prix.`
-      : 'Les abonnements restent informatifs : leur avantage réel n’est jamais calculé dans ce prototype.';
+  function formatDate(iso) {
+    return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
   }
 
-  function isAllowedOfficialUrl(platformId, rawUrl) {
-    if (!rawUrl || typeof rawUrl !== 'string') return false;
-    try {
-      const url = new URL(rawUrl);
-      if (url.protocol !== 'https:') return false;
-      return (ALLOWED_PLATFORM_HOSTS[platformId] || []).includes(url.hostname.toLocaleLowerCase('en-US'));
-    } catch (error) {
-      return false;
-    }
-  }
-
-  function restaurantMatchesQuery(restaurant) {
-    if (!state.query) return true;
-    const haystack = normalizeText([
-      restaurant.name,
-      restaurant.city,
-      restaurant.neighborhood,
-      ...(restaurant.cuisines || []),
-      ...(restaurant.offers || []).map(offer => offer.platformName),
-      ...(restaurant.offers || []).map(offer => offer.fulfillmentMode === 'pickup' ? 'retrait à emporter' : 'livraison'),
-      ...(restaurant.offers || []).flatMap(offer => (offer.categories || []).map(categoryLabel))
-    ].join(' '));
-    return haystack.includes(normalizeText(state.query));
-  }
-
-  function categoryLabel(category) {
-    return ({ meal: 'repas', grocery: 'courses', 'anti-waste': 'anti-gaspi' })[category] || category;
-  }
-
-  function offerMatchesFilters(offer) {
-    if (state.platforms.size && !state.platforms.has(offer.platformId)) return false;
-    if (state.fulfillmentModes.size && !state.fulfillmentModes.has(offer.fulfillmentMode)) return false;
-    if (state.categories.size && !(offer.categories || []).some(category => state.categories.has(category))) return false;
-    return true;
-  }
-
-  function restaurantMatchesOffers(restaurant) {
-    if (!state.platforms.size && !state.fulfillmentModes.size && !state.categories.size) return true;
-    return restaurant.offers.some(offerMatchesFilters);
-  }
-
-  function getVisibleOffers(restaurant) {
-    if (!state.platforms.size && !state.fulfillmentModes.size && !state.categories.size) return restaurant.offers;
-    return restaurant.offers.filter(offerMatchesFilters);
-  }
-
-  function getFilteredRestaurants() {
-    return restaurants.filter(restaurant => {
-      if (!restaurantMatchesQuery(restaurant)) return false;
-      if (!restaurantMatchesOffers(restaurant)) return false;
-      if (state.favoritesOnly && !state.favorites.has(restaurant.id)) return false;
-      return true;
-    });
-  }
-
-  function renderMetric(label, value, isFictitious) {
-    return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${isFictitious && value !== 'Non renseigné' ? '<span class="fake-label">Exemple inventé</span>' : ''}</div>`;
-  }
-
-  function renderOffer(offer) {
-    const allowedUrl = isAllowedOfficialUrl(offer.platformId, offer.officialUrl) ? offer.officialUrl : null;
-    const statusLabels = {
-      demo: 'Démonstration',
-      estimated: 'Estimé',
-      confirmed: 'Confirmé',
-      unknown: 'Inconnu'
-    };
-    const statusClass = ['demo', 'estimated', 'confirmed', 'unknown'].includes(offer.dataState) ? offer.dataState : 'unknown';
-    const fulfillmentLabel = offer.fulfillmentMode === 'pickup' ? 'Retrait' : 'Livraison';
-    const categoryLabels = (offer.categories || []).map(category => categoryLabel(category));
-    const sourceBits = [offer.source || 'Source non renseignée'];
-    if (offer.verifiedAt) sourceBits.push(`vérifié le ${offer.verifiedAt}`);
-
-    return `
-      <section class="offer" aria-label="Offre ${escapeHtml(offer.platformName)}">
-        <div class="offer-top">
-          <span class="platform">${escapeHtml(offer.platformName)} <span class="mode-pill">${fulfillmentLabel}</span>${categoryLabels.map(label => ` <span class="category-pill">${escapeHtml(label)}</span>`).join('')}</span>
-          <span class="status-pill status-${statusClass}">${escapeHtml(statusLabels[statusClass])}</span>
-        </div>
-        <div class="offer-values">
-          ${renderMetric('Exemple de panier', formatMoney(offer.itemPriceExample), offer.fictitious)}
-          ${renderMetric(offer.fulfillmentMode === 'pickup' ? 'Frais de retrait' : 'Frais de livraison', formatMoney(offer.deliveryFeeExample), offer.fictitious)}
-          ${renderMetric('Délai', formatEta(offer.etaMinutes), offer.fictitious)}
-          ${renderMetric('Minimum', formatMoney(offer.minimumOrderExample), offer.fictitious)}
-        </div>
-        <p class="offer-meta">${escapeHtml(sourceBits.join(' · '))}</p>
-        ${allowedUrl
-          ? `<a class="button" href="${escapeHtml(allowedUrl)}" target="_blank" rel="noopener noreferrer">Commander sur ${escapeHtml(offer.platformName)}</a><p class="action-note">Ouverture de l’URL HTTPS officielle vérifiée. Prix final confirmé sur la plateforme.</p>`
-          : `<button class="button" type="button" disabled>Commander sur ${escapeHtml(offer.platformName)}</button><p class="action-note">Lien officiel non renseigné : aucune destination n’est inventée.</p>`}
-      </section>`;
-  }
-
-  function renderRestaurant(restaurant) {
-    const favorite = state.favorites.has(restaurant.id);
-    const tags = (restaurant.cuisines || []).map(cuisine => `<span class="tag">${escapeHtml(cuisine)}</span>`).join('');
-    const offers = getVisibleOffers(restaurant).map(renderOffer).join('');
-
-    return `
-      <article class="restaurant-card" data-restaurant-id="${escapeHtml(restaurant.id)}">
-        <div class="card-head">
-          <div>
-            <h3>${escapeHtml(restaurant.name)}</h3>
-            <p class="location">${escapeHtml(restaurant.neighborhood)} · ${escapeHtml(restaurant.city)}</p>
-            <div class="tags">${tags}</div>
-          </div>
-          <button class="favorite" type="button" data-favorite="${escapeHtml(restaurant.id)}" aria-pressed="${favorite}" aria-label="${favorite ? 'Retirer' : 'Ajouter'} ${escapeHtml(restaurant.name)} ${favorite ? 'des' : 'aux'} favoris">${favorite ? '★ Favori' : '☆ Favori'}</button>
-        </div>
-        <div class="offers">${offers}</div>
-      </article>`;
+  function groupKey(item) {
+    return `${normalize(item.scenario)}\u0000${normalize(item.merchant)}`;
   }
 
   function render() {
-    const filtered = getFilteredRestaurants();
-    elements.cards.innerHTML = filtered.map(renderRestaurant).join('');
-    elements.emptyState.hidden = filtered.length !== 0;
-    elements.resultCount.textContent = `${filtered.length} ${filtered.length > 1 ? 'établissements/services fictifs affichés' : 'établissement/service fictif affiché'}`;
-    updatePreferenceNote();
+    const query = normalize(filterInput.value);
+    const groups = new Map();
+    observations.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).forEach((item) => {
+      const key = groupKey(item);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+
+    const matching = [...groups.values()].filter((items) => {
+      const text = normalize(`${items[0].scenario} ${items[0].merchant}`);
+      return !query || text.includes(query);
+    });
+    list.innerHTML = matching.map(renderGroup).join('');
+    emptyState.hidden = matching.length > 0;
+    if (observations.length && !matching.length) {
+      emptyState.hidden = false;
+      emptyState.innerHTML = '<h3>Aucun relevé correspondant</h3><p>Essaie un autre nom ou commerce dans le filtre.</p>';
+    } else if (!observations.length) {
+      emptyState.innerHTML = '<h3>Pas encore de relevé</h3><p>Ouvre une des applis, compose un panier réel sans passer commande, puis saisis son total ci-dessus. Aucun prix d’exemple n’est affiché.</p>';
+    }
+    const fresh = observations.filter((item) => Date.now() - Date.parse(item.createdAt) <= FRESH_MS);
+    comparisonStatus.textContent = fresh.length
+      ? `${observations.length} relevé${observations.length === 1 ? '' : 's'} enregistré${observations.length === 1 ? '' : 's'} · ${fresh.length} encore valable${fresh.length === 1 ? '' : 's'} pour comparer (moins de 2 h).`
+      : observations.length
+        ? `${observations.length} relevé${observations.length === 1 ? '' : 's'} enregistré${observations.length === 1 ? '' : 's'} · aucun relevé récent, compare à nouveau dans les applis.`
+        : 'Les prix ne sont relevés que lorsque tu les saisis depuis les applis.';
   }
 
-  function syncControlsFromState() {
-    elements.uberOne.checked = state.subscriptions.uberOne;
-    elements.deliverooPlus.checked = state.subscriptions.deliverooPlus;
-    elements.favoritesOnly.checked = state.favoritesOnly;
+  function renderGroup(items) {
+    const fresh = items.filter((item) => Date.now() - Date.parse(item.createdAt) <= FRESH_MS);
+    const hasBothPlatforms = new Set(fresh.map((item) => item.platform)).size === 2;
+    const cheapestId = hasBothPlatforms ? fresh.reduce((lowest, item) => item.total < lowest.total ? item : lowest).id : null;
+    const spread = hasBothPlatforms ? Math.max(...fresh.map((item) => item.total)) - Math.min(...fresh.map((item) => item.total)) : null;
+    const first = items[0];
+    const cards = items.map((item) => {
+      const stale = Date.now() - Date.parse(item.createdAt) > FRESH_MS;
+      const link = safeOfferUrl(item.url, item.platform);
+      const details = [item.basket, item.fees].filter(Boolean).map(escapeHtml).join(' · ');
+      return `<article class="observation-card${item.id === cheapestId ? ' is-cheapest' : ''}">
+        <div class="observation-top"><strong>${escapeHtml(PLATFORMS[item.platform].label)}</strong>${item.id === cheapestId ? '<span class="badge badge-best">Moins cher relevé</span>' : ''}${stale ? '<span class="badge badge-stale">À actualiser</span>' : ''}</div>
+        <p class="total">${formatMoney(item.total)}</p>
+        <dl class="facts"><div><dt>Délai</dt><dd>${item.eta ? `${escapeHtml(item.eta)} min` : 'Non indiqué'}</dd></div><div><dt>Relevé</dt><dd>${escapeHtml(formatDate(item.createdAt))}</dd></div></dl>
+        ${details ? `<p class="details">${details}</p>` : ''}
+        <div class="card-actions">${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Revoir l’offre ↗</a>` : '<span class="muted">Lien non fourni</span>'}<button class="delete-button" type="button" data-delete="${escapeHtml(item.id)}" aria-label="Supprimer le relevé ${escapeHtml(PLATFORMS[item.platform].label)} du ${escapeHtml(formatDate(item.createdAt))}">Supprimer</button></div>
+      </article>`;
+    }).join('');
+    const compareNote = hasBothPlatforms
+      ? `<p class="compare-note">${formatMoney(spread)} d’écart entre les relevés récents. Vérifie que le panier et les conditions de livraison sont identiques.</p>`
+      : '<p class="compare-note">Ajoute un relevé récent de l’autre plateforme pour comparer.</p>';
+    return `<section class="comparison-group" aria-label="${escapeHtml(first.scenario)} chez ${escapeHtml(first.merchant)}">
+      <div class="group-heading"><div><h3>${escapeHtml(first.scenario)}</h3><p>${escapeHtml(first.merchant)}</p></div><span class="group-count">${items.length} relevé${items.length === 1 ? '' : 's'}</span></div>
+      <div class="observation-grid">${cards}</div>${compareNote}</section>`;
   }
 
-  function clearFilters() {
-    state.query = '';
-    state.platforms.clear();
-    state.fulfillmentModes.clear();
-    state.categories.clear();
-    state.favoritesOnly = false;
-    elements.query.value = '';
-    elements.platformChecks.forEach(check => { check.checked = false; });
-    elements.fulfillmentChecks.forEach(check => { check.checked = false; });
-    elements.categoryChecks.forEach(check => { check.checked = false; });
-    elements.favoritesOnly.checked = false;
-    render();
-  }
-
-  elements.form.addEventListener('submit', event => {
+  form.addEventListener('submit', (event) => {
     event.preventDefault();
-    state.query = elements.query.value.trim();
-    render();
-  });
-
-  elements.query.addEventListener('input', () => {
-    state.query = elements.query.value.trim();
-    render();
-  });
-
-  elements.platformChecks.forEach(check => {
-    check.addEventListener('change', () => {
-      state.platforms = new Set(elements.platformChecks.filter(item => item.checked).map(item => item.value));
-      render();
+    formError.hidden = true;
+    const data = new FormData(form);
+    const scenario = String(data.get('scenario') || '').trim();
+    const merchant = String(data.get('merchant') || '').trim();
+    const platform = String(data.get('platform') || '');
+    const total = Number(data.get('total'));
+    const etaValue = String(data.get('eta') || '').trim();
+    const eta = etaValue ? Number(etaValue) : null;
+    const rawUrl = String(data.get('url') || '').trim();
+    const url = rawUrl ? safeOfferUrl(rawUrl, platform) : '';
+    if (!scenario || !merchant || !Object.hasOwn(PLATFORMS, platform) || !Number.isFinite(total) || total <= 0 || total > 10000) {
+      formError.textContent = 'Complète le nom de comparaison, le commerce et un total supérieur à 0 €.';
+      formError.hidden = false;
+      return;
+    }
+    if (etaValue && (!Number.isInteger(eta) || eta < 1 || eta > 600)) {
+      formError.textContent = 'Le délai doit être un nombre entier entre 1 et 600 minutes.';
+      formError.hidden = false;
+      return;
+    }
+    if (rawUrl && !url) {
+      formError.textContent = 'Le lien doit être une adresse HTTPS officielle Uber Eats ou Deliveroo correspondant à la plateforme choisie.';
+      formError.hidden = false;
+      return;
+    }
+    observations.unshift({
+      id: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      scenario, merchant, platform, total: Math.round(total * 100) / 100, eta,
+      fees: String(data.get('fees') || '').trim(), basket: String(data.get('basket') || '').trim(),
+      url, createdAt: new Date().toISOString()
     });
-  });
-
-  elements.fulfillmentChecks.forEach(check => {
-    check.addEventListener('change', () => {
-      state.fulfillmentModes = new Set(elements.fulfillmentChecks.filter(item => item.checked).map(item => item.value));
-      render();
-    });
-  });
-
-  elements.categoryChecks.forEach(check => {
-    check.addEventListener('change', () => {
-      state.categories = new Set(elements.categoryChecks.filter(item => item.checked).map(item => item.value));
-      render();
-    });
-  });
-
-  elements.uberOne.addEventListener('change', () => {
-    state.subscriptions.uberOne = elements.uberOne.checked;
-    saveLocalState();
-    updatePreferenceNote();
-  });
-
-  elements.deliverooPlus.addEventListener('change', () => {
-    state.subscriptions.deliverooPlus = elements.deliverooPlus.checked;
-    saveLocalState();
-    updatePreferenceNote();
-  });
-
-  elements.favoritesOnly.addEventListener('change', () => {
-    state.favoritesOnly = elements.favoritesOnly.checked;
+    observations = observations.slice(0, MAX_OBSERVATIONS);
+    persist();
+    form.reset();
     render();
+    document.querySelector('#observations-title').focus({ preventScroll: true });
+    document.querySelector('#observations').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
-  elements.cards.addEventListener('click', event => {
-    const button = event.target.closest('[data-favorite]');
+  list.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-delete]');
     if (!button) return;
-    const id = button.dataset.favorite;
-    if (state.favorites.has(id)) state.favorites.delete(id);
-    else state.favorites.add(id);
-    saveLocalState();
+    observations = observations.filter((item) => item.id !== button.dataset.delete);
+    persist();
     render();
   });
 
-  elements.clearFilters.addEventListener('click', clearFilters);
-  elements.resetLocal.addEventListener('click', clearLocalState);
-
-  loadLocalState();
-  syncControlsFromState();
+  filterInput.addEventListener('input', render);
+  readStorage();
+  storageStatus.textContent = storageAvailable ? 'Les relevés sont conservés sur cet appareil.' : 'Le stockage local est indisponible; les relevés précédents n’ont pas pu être chargés.';
+  storageStatus.classList.toggle('storage-warning', !storageAvailable);
   render();
 })();
