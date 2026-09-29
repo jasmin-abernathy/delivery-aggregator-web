@@ -386,7 +386,7 @@ function se_answer_present(array $answers, array $question): bool
     return is_array($value) ? count($value) > 0 : trim((string)$value) !== '';
 }
 
-function se_is_complete(array $answers, array $previousMeta, array $revalidated): bool
+function se_is_complete(array $answers): bool
 {
     foreach (se_survey_config()['questions'] as $question) {
         if (!$question['essential']) {
@@ -394,13 +394,6 @@ function se_is_complete(array $answers, array $previousMeta, array $revalidated)
         }
         if (!se_answer_present($answers, $question)) {
             return false;
-        }
-        $id = $question['id'];
-        if (isset($previousMeta[$id])) {
-            $oldRevision = (int)($previousMeta[$id]['revision'] ?? 0);
-            if ($oldRevision !== (int)$question['revision'] && !in_array($id, $revalidated, true)) {
-                return false;
-            }
         }
     }
     return true;

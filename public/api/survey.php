@@ -69,7 +69,6 @@ if ($localToken === '' || strlen($localToken) < 20) {
 }
 
 $answers = se_clean_answers($data['answers'] ?? []);
-$revalidated = array_values(array_filter(array_map('strval', is_array($data['revalidated'] ?? null) ? $data['revalidated'] : [])));
 $comment = se_limit_text(trim((string)($data['change_comment'] ?? '')), 500);
 $newsletterOptIn = ($data['newsletter_opt_in'] ?? false) === true;
 $email = se_normalize_email((string)($data['email'] ?? ''));
@@ -110,7 +109,7 @@ try {
 $current = se_fetch_current_response($pdo, (int)$respondent['id']);
 $previousMeta = $current ? se_decode_json_field($current['question_meta_json'] ?? null) : [];
 $currentMeta = se_current_question_meta();
-$complete = se_is_complete($answers, $previousMeta, $revalidated);
+$complete = se_is_complete($answers);
 $now = se_now();
 $createdNewVersion = false;
 

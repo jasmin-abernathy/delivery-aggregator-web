@@ -111,7 +111,7 @@ Le questionnaire est volontairement indépendant des comptes des plateformes et 
 - reprise du même brouillon tant qu’il n’a jamais été exploitable ;
 - après une première version exploitable, une modification crée une nouvelle version ; seule la plus récente compte dans les agrégats ;
 - l’utilisateur ne revoit que les changements de sa version précédente, avec un commentaire global facultatif de 500 caractères ;
-- une reformulation force une revalidation ; un changement des choix ou du statut essentielle/facultative est signalé ;
+- une reformulation est signalée pour inviter à vérifier la réponse, sans exiger de la modifier ou de la revalider ; un changement des choix ou du statut essentielle/facultative est également signalé ;
 - les brouillons incomplets sont purgés après 30 jours sans activité ;
 - un unique rappel est prévu après 7 jours lorsque l’utilisateur a fourni une adresse e-mail ;
 - les résultats agrégés s’ouvrent à partir de 7 participations exploitables ;
