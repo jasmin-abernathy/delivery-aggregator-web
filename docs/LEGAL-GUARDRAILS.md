@@ -1,6 +1,6 @@
 # Garde-fous juridiques et produit
 
-Dernière revue de principe : 4 septembre 2026.
+Dernière revue de principe : 29 septembre 2026.
 
 Ce document ne remplace pas un avis juridique. Il sert de contrat produit interne pour éviter d’introduire par commodité technique un fonctionnement incompatible avec les conditions des plateformes ou les règles applicables.
 
@@ -15,22 +15,24 @@ Ce document ne remplace pas un avis juridique. Il sert de contrat produit intern
 
 ## À ne pas implémenter sans accord explicite adapté
 
-- Scraping automatisé des interfaces grand public Uber Eats ou Deliveroo.
-- Collecte des identifiants ou mots de passe des comptes tiers.
+- Scraping automatisé des interfaces grand public des services comparés.
+- Collecte des identifiants, mots de passe, cookies, sessions ou jetons des comptes tiers.
 - Automatisation de connexion ou de commande dans les comptes utilisateurs.
-- Réutilisation d’un avantage Uber One / Deliveroo Plus dans un checkout tiers comme s’il était officiellement reconnu.
+- Réutilisation d’un avantage d’abonnement dans un checkout tiers comme s’il était officiellement reconnu.
 - Copie fidèle de l’interface, des textes, illustrations, logos ou assets propriétaires.
-- Présentation laissant croire que le service est affilié, certifié ou partenaire des plateformes si ce n’est pas le cas.
+- Présentation laissant croire que le service est affilié, certifié ou partenaire d’une plateforme si ce n’est pas le cas.
 
 ## Transparence du comparateur
 
 L’interface devra afficher de façon intelligible :
 
 - la source et la fraîcheur des informations importantes ;
-- ce qui est confirmé, estimé ou inconnu ;
+- ce qui est démonstration, confirmé, estimé ou inconnu ;
 - les principaux critères de classement ;
 - la présence éventuelle d’un référencement rémunéré ;
 - le fait que le prix final, les frais et les avantages d’abonnement sont confirmés sur la plateforme officielle lorsque le checkout y est effectué.
+
+Les catégories « Repas », « Courses » et « Anti-gaspi » ainsi que les modes « Livraison » et « Retrait » décrivent uniquement le type d’offre et son mode de récupération ; ils ne constituent pas une promesse de disponibilité locale.
 
 ## Données personnelles
 
