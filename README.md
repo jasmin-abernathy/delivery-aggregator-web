@@ -33,8 +33,17 @@ public/
   index.html                Structure accessible de l’interface
   styles.css                Mise en page responsive et styles
   app.js                    Recherche, filtres, favoris et stockage local
+  survey.html               Questionnaire public accessible, une question par écran
+  survey.css                Chronologie, progression et mise en page du questionnaire
+  survey.js                 Reprise locale/e-mail, récapitulatif et versioning côté UI
+  results.html              Page dédiée aux résultats agrégés
+  results.js                Accès local ou OTP et rendu des répartitions
   api/
     newsletter.php          Consentement + test anti-robot + connecteur Potager Mailing
+    survey-lib.php          SQLite privé, schéma du questionnaire et helpers
+    survey.php              Chargement/enregistrement/versioning
+    auth.php                OTP à usage unique et sessions d’une heure
+    results.php             Agrégats des seules participations exploitables
   data/
     demo-restaurants.js     Fixtures explicitement fictives
 
@@ -89,4 +98,37 @@ Le prototype public visé est `sanseffort.lepotager.org`. Le mécanisme de dépl
 
 ## Statut
 
-Phase 1 — prototype statique interactif, autonome et testable avec données fictives.
+Phase 1 — prototype interactif + questionnaire public versionné prêts sur la branche de travail ; données comparateur encore fictives.
+
+
+## Questionnaire public
+
+Le questionnaire est volontairement indépendant des comptes des plateformes et ne requiert pas de compte Sans Effort.
+
+- progression calculée uniquement sur les questions essentielles ;
+- envoi autorisé même si elles ne sont pas toutes complétées ;
+- aucune réponse incomplète n’entre dans les analyses ;
+- reprise du même brouillon tant qu’il n’a jamais été exploitable ;
+- après une première version exploitable, une modification crée une nouvelle version ; seule la plus récente compte dans les agrégats ;
+- l’utilisateur ne revoit que les changements de sa version précédente, avec un commentaire global facultatif de 500 caractères ;
+- une reformulation force une revalidation ; un changement des choix ou du statut essentielle/facultative est signalé ;
+- les brouillons incomplets sont purgés après 30 jours sans activité ;
+- un unique rappel est prévu après 7 jours lorsque l’utilisateur a fourni une adresse e-mail ;
+- les résultats agrégés s’ouvrent à partir de 7 participations exploitables ;
+- les textes libres ne sont jamais publiés dans les agrégats.
+
+### Pré-requis serveur du questionnaire
+
+Le serveur PHP doit disposer de PDO avec le pilote SQLite et de Sodium. La base `sans-effort-survey.sqlite` et les secrets restent hors du webroot, dans le répertoire privé.
+
+Secrets distincts recommandés :
+
+- `SANS_EFFORT_IDENTITY_SECRET` : HMAC de l’adresse pour retrouver une participation sans indexer l’e-mail en clair ;
+- `SANS_EFFORT_CONTACT_SECRET` : chiffrement de l’e-mail lorsque les rappels/reprises sont activés ;
+- `SANS_EFFORT_AUTH_MAIL_SECRET` : signature des demandes serveur-à-serveur vers Le Potager Mailing.
+
+L’endpoint Potager correspondant est `/mailing/sans-effort-auth-api.php`. Le même secret doit y être exposé sous `LEPOTAGER_SANS_EFFORT_AUTH_SECRET`.
+
+La maintenance se lance côté serveur avec `php scripts/survey-maintenance.php`, typiquement une fois par jour. Elle envoie au maximum un rappel, purge les brouillons inactifs de plus de 30 jours et nettoie les OTP/sessions expirés.
+
+Le code OTP est valable 15 minutes et une seule fois. Une session validée reste valable une heure et est restaurée localement tant qu’elle n’a pas expiré.

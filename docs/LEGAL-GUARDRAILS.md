@@ -41,3 +41,22 @@ Au début, privilégier le stockage local pour les préférences non sensibles. 
 ## Paiement
 
 Le MVP ne collecte pas le paiement des commandes. Si un paiement marketplace est ajouté ultérieurement, l’architecture devra passer par un prestataire de services de paiement adapté et faire l’objet d’une analyse réglementaire dédiée.
+
+
+## Questionnaire de test — minimisation et conservation
+
+Le questionnaire distingue trois usages qui ne doivent pas être confondus :
+
+1. réponses au test produit ;
+2. reprise/authentification facultative par e-mail ;
+3. inscription volontaire à la liste de test Sans Effort.
+
+L’inscription à la liste de test reste un consentement séparé. Fournir une adresse uniquement pour reprendre une participation ou recevoir le rappel ne vaut pas inscription à cette liste.
+
+Les participations incomplètes ne sont utilisées dans aucune analyse. Elles sont conservées au maximum 30 jours après la dernière activité, puis supprimées avec les données techniques associées. Un seul rappel peut être envoyé avant cette purge lorsqu’une adresse e-mail a été fournie.
+
+L’adresse de reprise n’est pas utilisée comme clé en clair dans la base d’enquête : une clé HMAC sert à la recherche et la valeur nécessaire aux envois est chiffrée. Les codes temporaires sont hashés, valables 15 minutes et à usage unique ; les sessions durent une heure.
+
+Les résultats affichés aux participants sont agrégés, ne contiennent pas les réponses textuelles libres, n’établissent aucun classement entre personnes et ne deviennent disponibles qu’à partir d’un seuil minimal de sept participations exploitables.
+
+Avant mise en production, la durée de conservation des participations complètes doit encore être formalisée dans l’information remise aux testeurs ; le seuil de 30 jours ne concerne ici que les brouillons incomplets.

@@ -89,3 +89,27 @@ Les clés API et secrets restent hors du webroot et ne sont jamais commités.
 ## 6. Préparation de l’application mobile
 
 Le futur client mobile devra consommer la même API et le même modèle normalisé. Les règles de comparaison, de classement et de transparence doivent être documentées indépendamment de l’interface web.
+
+
+## 7. Questionnaire et résultats
+
+Le questionnaire utilise un stockage SQLite privé et ne partage pas sa table de réponses avec la liste e-mail de test.
+
+### Identité et reprise
+
+- sans e-mail : un jeton aléatoire local permet la reprise sur le même appareil ;
+- avec e-mail : l’adresse normalisée sert uniquement à produire une clé HMAC de recherche ; l’adresse nécessaire aux rappels/OTP est conservée chiffrée ;
+- OTP : 6 chiffres, hashé en base, usage unique, expiration 15 minutes, cinq tentatives maximum ;
+- session après OTP : jeton aléatoire hashé en base, expiration une heure.
+
+### Versioning
+
+Une participation incomplète est complétée en place. Dès qu’une version exploitable existe, une modification des réponses ou du schéma visible crée une version suivante. Les versions anciennes restent internes ; l’interface ne montre que les différences avec la version immédiatement précédente.
+
+Chaque question possède un identifiant stable, une révision de formulation, une révision de choix et un statut essentielle/facultative. Une reformulation exige une revalidation explicite. Une question supprimée reste dans les anciennes versions mais n’est plus rendue ni comparée côté utilisateur.
+
+### Exploitabilité
+
+Une participation est exploitable seulement lorsque toutes les questions essentielles actives sont renseignées et les éventuelles reformulations essentielles revalidées. Les analyses et résultats utilisent uniquement la version active et exploitable de chaque répondant.
+
+Les résultats publics sont des agrégats de choix, accessibles aux répondants éligibles à partir de sept participations exploitables. Les réponses libres sont exclues de cette page.
