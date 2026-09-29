@@ -7,7 +7,7 @@
 - Tant qu’elle n’a jamais été exploitable, les compléments modifient la même version.
 - Après une première version exploitable, la version la plus récente remplace la précédente dans les statistiques ; les anciennes versions restent internes pour suivre l’évolution.
 - L’utilisateur voit seulement ce qui a changé depuis sa version précédente et peut joindre un commentaire global facultatif de 500 caractères.
-- Une question reformulée doit être revalidée. Des choix modifiés sont signalés sans revalidation forcée. Un changement essentielle/facultative est signalé et une nouvelle question essentielle non répondue est mise en évidence.
+- Une reformulation est signalée pour inviter à vérifier la réponse, sans exiger de la modifier ou de la revalider. Des choix modifiés sont signalés sans revalidation forcée. Un changement essentielle/facultative est signalé et une nouvelle question essentielle non répondue est mise en évidence.
 - Une question supprimée reste dans l’historique interne mais disparaît de l’interface et des comparaisons utilisateur.
 
 ## Séparation des données
