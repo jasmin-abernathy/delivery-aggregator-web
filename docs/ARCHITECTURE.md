@@ -2,7 +2,7 @@
 
 ## Parcours actuel
 
-Sans Effort est un comparateur personnel local. L’utilisateur consulte lui-même les offres dans Uber Eats et Deliveroo, puis saisit les totaux et délais visibles dans leurs parcours officiels avant paiement. Le navigateur regroupe les saisies qui ont le même nom de comparaison et le même commerce.
+Sans Effort est un comparateur personnel local. L’utilisateur consulte lui-même les offres dans Uber Eats et Deliveroo, puis saisit les totaux et délais visibles dans leurs parcours officiels avant paiement. Le navigateur regroupe les saisies qui ont le même nom de comparaison, le même commerce et le même mode (livraison ou retrait). Un secteur facultatif peut aussi distinguer les observations sans demander d’adresse précise.
 
 Le comparateur ne lit pas les applications ou leurs pages, ne se connecte pas aux comptes et ne reçoit aucune donnée de serveur. Les entrées sont sauvegardées dans `localStorage`, jusqu’à 100 par navigateur. Les valeurs restent celles saisies; elles ne sont ni estimées ni recalculées. Pour comparer, une offre de chaque plateforme doit avoir été relevée au cours des deux dernières heures.
 
@@ -12,6 +12,8 @@ Le comparateur ne lit pas les applications ou leurs pages, ne se connecte pas au
 - nom donné à la comparaison ;
 - nom du commerce ;
 - plateforme (`uber-eats` ou `deliveroo`) ;
+- mode (`delivery` ou `pickup`) ;
+- secteur facultatif, saisi sans adresse précise ;
 - total affiché avant paiement, en euros ;
 - délai annoncé, facultatif ;
 - détail des frais/promotions et contenu du panier, facultatifs ;
