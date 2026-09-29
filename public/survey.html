@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="light">
   <meta name="description" content="Questionnaire de test du prototype public Sans Effort.">
   <title>Votre avis — Sans Effort</title>
   <link rel="stylesheet" href="styles.css">
@@ -40,7 +39,7 @@
 
     <div class="mobile-progress" aria-live="polite">
       <div class="progress-line"><span id="progressLabel">Chargement…</span><span id="progressPercent"></span></div>
-      <progress id="progressBar" max="1" value="0"></progress>
+      <progress id="progressBar" aria-labelledby="progressLabel" max="1" value="0"></progress>
       <details class="mobile-timeline"><summary>Voir les questions</summary><ol id="timelineMobile" class="timeline"></ol></details>
     </div>
 
