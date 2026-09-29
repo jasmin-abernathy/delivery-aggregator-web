@@ -6,7 +6,7 @@ Comparateur personnel pour relever et comparer les offres réellement affichées
 
 - ouvre les sites officiels pour consulter les offres dans les applications ou le navigateur ;
 - enregistre manuellement le total affiché avant paiement, le délai, les frais/promotions et le contenu du panier ;
-- regroupe les relevés par nom de comparaison et commerce ;
+- regroupe les relevés par nom de comparaison, commerce, mode (livraison/retrait) et secteur facultatif ;
 - met en évidence le relevé le moins cher lorsque les deux plateformes ont été relevées dans les deux dernières heures ;
 - conserve jusqu’à 100 relevés dans le `localStorage` de l’appareil, avec filtre et suppression individuelle.
 
