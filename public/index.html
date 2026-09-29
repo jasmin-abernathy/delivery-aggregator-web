@@ -2,146 +2,105 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="Sans Effort, prototype public indépendant pour comparer des offres de livraison et de retrait.">
-  <title>Sans Effort — prototype public de comparaison</title>
+  <meta name="description" content="Comparez les prix et délais réellement affichés dans Uber Eats et Deliveroo. Vos relevés restent sur cet appareil.">
+  <title>Sans Effort — comparer mes commandes</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#results">Aller aux résultats</a>
+  <a class="skip-link" href="#observations">Aller à mes relevés</a>
+  <header class="hero wrap">
+    <p class="eyebrow">Sans Effort · comparateur personnel</p>
+    <h1>Compare le même panier avant de commander.</h1>
+    <p class="lead">Ouvre Uber Eats et Deliveroo, relève les prix et délais affichés pour le même panier, puis compare-les ici. Tes relevés restent dans ce navigateur.</p>
+    <div class="platform-links" aria-label="Ouvrir les plateformes">
+      <a class="button" href="https://www.ubereats.com/" target="_blank" rel="noopener noreferrer">Ouvrir Uber Eats <span aria-hidden="true">↗</span></a>
+      <a class="button button-secondary" href="https://deliveroo.fr/" target="_blank" rel="noopener noreferrer">Ouvrir Deliveroo <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
 
-  <main>
-    <header class="hero wrap">
-      <p class="eyebrow">Sans Effort · prototype public indépendant</p>
-      <h1>Comparez avant de commander, sans multiplier les applications.</h1>
-      <p class="lead">Sans Effort teste une interface unique pour comparer livraison et retrait. Les données actuelles restent fictives ou de démonstration ; la commande se termine toujours sur le service officiel.</p>
-      <p><a class="button" href="survey.html">Donner mon avis sur le prototype</a></p>
-    </header>
-
-    <section class="wrap notice" aria-labelledby="demo-title">
-      <div>
-        <p class="notice-kicker">À savoir avant de tester</p>
-        <h2 id="demo-title">Aucun prix affiché ici n’est un prix observé.</h2>
-      </div>
-      <p>Établissements, montants, frais et délais sont inventés pour valider l’UX. Aucun partenariat ou accès aux comptes des plateformes n’est utilisé.</p>
+  <main class="wrap">
+    <section class="howto" aria-labelledby="howto-title">
+      <h2 id="howto-title">Comment comparer</h2>
+      <ol>
+        <li>Compose le même panier dans chaque appli, sans payer.</li>
+        <li>Relève le total final affiché avant paiement et le délai annoncé.</li>
+        <li>Enregistre un relevé par plateforme. Le comparateur signale le moins cher parmi les relevés récents.</li>
+      </ol>
+      <p>Un relevé expire pour la comparaison après 2 heures. Le prix final et les avantages éventuels restent à confirmer dans l’application.</p>
     </section>
 
-    <section class="wrap controls" aria-labelledby="search-title">
-      <div class="controls-head">
+    <section class="panel entry-panel" aria-labelledby="entry-title">
+      <div class="section-heading">
         <div>
-          <p class="section-kicker">Recherche locale</p>
-          <h2 id="search-title">Que cherchez-vous ?</h2>
+          <p class="section-kicker">Ajouter un prix observé</p>
+          <h2 id="entry-title">Nouveau relevé</h2>
         </div>
-        <button class="button button-secondary button-small" id="resetLocal" type="button">Réinitialiser mes données locales</button>
       </div>
-
-      <form id="searchForm" class="search-form" role="search">
-        <label for="searchInput">Établissement, service, ville, quartier ou catégorie</label>
-        <div class="search-row">
-          <input id="searchInput" name="q" type="search" autocomplete="off" placeholder="Ex. Metz, Sablon, sushi, anti-gaspi…">
-          <button class="button" type="submit">Rechercher</button>
+      <form id="offerForm" novalidate>
+        <div class="form-grid">
+          <label class="field field-wide">Nom de la comparaison
+            <input name="scenario" required maxlength="60" placeholder="Ex. Dîner de ce soir" autocomplete="off">
+            <span class="help">Utilise le même nom pour regrouper les relevés du même panier.</span>
+          </label>
+          <label class="field">Restaurant ou commerce
+            <input name="merchant" required maxlength="80" placeholder="Ex. Le nom affiché dans l’appli" autocomplete="organization">
+          </label>
+          <label class="field">Plateforme
+            <select name="platform" required>
+              <option value="uber-eats">Uber Eats</option>
+              <option value="deliveroo">Deliveroo</option>
+            </select>
+          </label>
+          <label class="field">Total affiché avant paiement (€)
+            <input name="total" type="number" required min="0.01" max="10000" step="0.01" inputmode="decimal" placeholder="24,90">
+            <span class="help">Saisis le total de la commande tel qu’il apparaît dans l’appli.</span>
+          </label>
+          <label class="field">Délai annoncé (minutes)
+            <input name="eta" type="number" min="1" max="600" step="1" inputmode="numeric" placeholder="35">
+          </label>
+          <label class="field">Frais et promotions affichés
+            <input name="fees" maxlength="120" placeholder="Ex. livraison 0 €, frais de service 1,20 €">
+          </label>
+          <label class="field">Lien vers la page de l’offre (facultatif)
+            <input name="url" type="url" inputmode="url" placeholder="https://…">
+            <span class="help">Seuls les liens officiels Uber Eats et Deliveroo sont acceptés.</span>
+          </label>
+          <label class="field field-wide">Contenu du panier (facultatif)
+            <input name="basket" maxlength="160" placeholder="Ex. 2 plats, 1 boisson">
+          </label>
         </div>
+        <div class="form-actions">
+          <button class="button" type="submit">Enregistrer ce relevé</button>
+          <span id="storageStatus" class="storage-status" role="status"></span>
+        </div>
+        <p id="formError" class="form-error" role="alert" hidden></p>
       </form>
-
-      <div class="filter-grid">
-        <fieldset>
-          <legend>Plateformes proposées</legend>
-          <p class="field-help">Un établissement ou service reste affiché s’il propose au moins une plateforme cochée.</p>
-          <div class="choice-row">
-            <label class="choice"><input type="checkbox" name="platform" value="uber-eats"> Uber Eats</label>
-            <label class="choice"><input type="checkbox" name="platform" value="deliveroo"> Deliveroo</label>
-            <label class="choice"><input type="checkbox" name="platform" value="too-good-to-go"> Too Good To Go</label>
-            <label class="choice"><input type="checkbox" name="platform" value="le-fourgon"> Le Fourgon</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Mode</legend>
-          <p class="field-help">« Retrait » regroupe les offres à récupérer sur place, quel que soit le service.</p>
-          <div class="choice-row">
-            <label class="choice"><input type="checkbox" name="fulfillment" value="delivery"> Livraison</label>
-            <label class="choice"><input type="checkbox" name="fulfillment" value="pickup"> Retrait</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Type d’offre</legend>
-          <p class="field-help">Repas, courses et anti-gaspi sont indépendants du mode de récupération.</p>
-          <div class="choice-row">
-            <label class="choice"><input type="checkbox" name="category" value="meal"> Repas</label>
-            <label class="choice"><input type="checkbox" name="category" value="grocery"> Courses</label>
-            <label class="choice"><input type="checkbox" name="category" value="anti-waste"> Anti-gaspi</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Mes abonnements déclarés</legend>
-          <p class="field-help">Enregistrés uniquement sur cet appareil si le navigateur l’autorise. Aucun prix n’est recalculé.</p>
-          <div class="choice-row">
-            <label class="choice"><input id="uberOne" type="checkbox"> J’ai Uber One</label>
-            <label class="choice"><input id="deliverooPlus" type="checkbox"> J’ai Deliveroo Plus</label>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Affichage</legend>
-          <div class="choice-row">
-            <label class="choice"><input id="favoritesOnly" type="checkbox"> Favoris uniquement</label>
-          </div>
-        </fieldset>
-      </div>
-
-      <div class="preference-note" id="preferenceNote">Les abonnements restent informatifs : leur avantage réel n’est jamais calculé dans ce prototype.</div>
     </section>
 
-    <section class="section wrap" id="results" aria-labelledby="results-title">
-      <div class="section-head">
+    <section id="observations" class="observations" aria-labelledby="observations-title">
+      <div class="section-heading observations-heading">
         <div>
-          <p class="section-kicker">Comparaison</p>
-          <h2 id="results-title">Offres de démonstration</h2>
+          <p class="section-kicker">Tes relevés sur cet appareil</p>
+          <h2 id="observations-title" tabindex="-1">Comparaisons enregistrées</h2>
         </div>
-        <p class="result-count" id="resultCount" aria-live="polite"></p>
+        <label class="filter-field">Filtrer
+          <input id="filterInput" type="search" placeholder="Nom ou commerce" autocomplete="off">
+        </label>
       </div>
-
-      <div id="cards" class="cards"></div>
-
-      <div id="emptyState" class="empty-state" hidden>
-        <h3>Aucun résultat avec ces filtres.</h3>
-        <p>Essayez une autre recherche ou repartez de l’ensemble des établissements et services fictifs.</p>
-        <button class="button button-secondary" id="clearFilters" type="button">Effacer les filtres</button>
+      <p id="comparisonStatus" class="comparison-status" aria-live="polite"></p>
+      <div id="comparisonList" class="comparison-list"></div>
+      <div id="emptyState" class="empty-state">
+        <h3>Pas encore de relevé</h3>
+        <p>Ouvre une des applis, compose un panier réel sans passer commande, puis saisis son total ci-dessus. Aucun prix d’exemple n’est affiché.</p>
       </div>
-    </section>
-
-    <section class="section wrap" aria-labelledby="status-title">
-      <div class="section-head compact">
-        <div>
-          <p class="section-kicker">Transparence</p>
-          <h2 id="status-title">Comment lire les statuts de données</h2>
-        </div>
-      </div>
-      <div class="status-grid">
-        <article><span class="status-pill status-demo">Démonstration</span><h3>Inventé pour tester</h3><p>Aucune valeur issue des plateformes. C’est le seul statut utilisé dans les fixtures actuelles.</p></article>
-        <article><span class="status-pill status-estimated">Estimé</span><h3>Indicatif</h3><p>Réservé à une future information calculée ou indicative, avec une source et une méthode explicites.</p></article>
-        <article><span class="status-pill status-confirmed">Confirmé</span><h3>Source autorisée</h3><p>Réservé à une donnée fournie légalement, assez récente et accompagnée de sa source.</p></article>
-        <article><span class="status-pill status-unknown">Inconnu</span><h3>Non disponible</h3><p>Aucune valeur n’est inventée pour remplir un trou. Le checkout officiel reste la référence finale.</p></article>
-      </div>
-    </section>
-    <section class="section wrap notice" aria-labelledby="feedback-title">
-      <div>
-        <p class="notice-kicker">Votre retour compte</p>
-        <h2 id="feedback-title">Testez le parcours, puis dites-nous ce qui doit changer.</h2>
-      </div>
-      <p>Le questionnaire avance une question à la fois. Une participation incomplète peut être reprise et n’entre pas dans les résultats tant que toutes les questions essentielles ne sont pas complétées.</p>
-      <p><a class="button" href="survey.html">Répondre au questionnaire</a></p>
     </section>
   </main>
 
   <footer class="wrap footer">
-    <p>Prototype indépendant. Aucune affiliation avec Uber Eats, Deliveroo, Too Good To Go ou Le Fourgon n’est revendiquée. Le projet ne prend pas les commandes et ne collecte aucun identifiant de ces services.</p>
+    <p>Sans Effort est un projet indépendant, sans affiliation avec Uber Eats ou Deliveroo. Il ne lit pas les applis, ne collecte aucun identifiant et ne passe aucune commande. Les données saisies sont stockées localement dans ce navigateur.</p>
   </footer>
-
-  <script src="data/demo-restaurants.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
