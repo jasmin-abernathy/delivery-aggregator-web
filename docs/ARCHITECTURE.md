@@ -1,115 +1,36 @@
-# Architecture cible — MVP web
+# Architecture de la première version utilisable
 
-## 1. Stratégie générale
+## Parcours actuel
 
-Le projet commence comme site web responsive, puis pourra devenir PWA et enfin application mobile sans jeter le modèle métier.
+Sans Effort est un comparateur personnel local. L’utilisateur consulte lui-même les offres dans Uber Eats et Deliveroo, puis saisit les totaux et délais visibles dans leurs parcours officiels avant paiement. Le navigateur regroupe les saisies qui ont le même nom de comparaison et le même commerce.
 
-Le frontend ne doit jamais dépendre directement d’une structure de données propre à Uber Eats, Deliveroo, Too Good To Go, Le Fourgon ou à un autre service. Toute donnée externe passe par un adaptateur et est normalisée.
+Le comparateur ne lit pas les applications ou leurs pages, ne se connecte pas aux comptes et ne reçoit aucune donnée de serveur. Les entrées sont sauvegardées dans `localStorage`, jusqu’à 100 par navigateur. Les valeurs restent celles saisies; elles ne sont ni estimées ni recalculées. Pour comparer, une offre de chaque plateforme doit avoir été relevée au cours des deux dernières heures.
 
-## 2. Modèle normalisé minimal
+## Modèle d’un relevé
 
-### Établissement / service
+- identifiant local aléatoire ;
+- nom donné à la comparaison ;
+- nom du commerce ;
+- plateforme (`uber-eats` ou `deliveroo`) ;
+- total affiché avant paiement, en euros ;
+- délai annoncé, facultatif ;
+- détail des frais/promotions et contenu du panier, facultatifs ;
+- lien HTTPS officiel de l’offre, facultatif ;
+- heure d’observation.
 
-- `id` interne stable ;
-- nom ;
-- adresse / zone ;
-- coordonnées si disponibles légalement ;
-- catégories descriptives ;
-- image autorisée ou image interne ;
-- plateformes disponibles.
+La saisie ne prouve pas que deux paniers sont identiques. L’interface invite l’utilisateur à vérifier le contenu, l’adresse, les frais et les conditions d’abonnement dans les applications. Aucun prix final garanti n’est annoncé.
 
-Le modèle doit pouvoir représenter aussi bien un restaurant qu’un commerce, une offre anti-gaspi ou un service de courses.
+## Stockage et sécurité
 
-### Offre par plateforme
+Pas de compte ni d’API serveur dans cette version. Les données ne quittent pas le navigateur et ne sont pas synchronisées entre appareils. Le code valide les domaines des liens optionnels et échappe les valeurs saisies avant leur rendu HTML.
 
-- plateforme ;
-- identifiant externe si usage autorisé ;
-- URL / deep link officiel ;
-- mode de récupération : `delivery` ou `pickup` ;
-- une ou plusieurs catégories d’offre : `meal`, `grocery`, `anti-waste` ;
-- prix ou fourchette connue ;
-- frais de livraison/retrait connus ;
-- frais de service connus ;
-- délai estimé ;
-- minimum de commande ;
-- horodatage de fraîcheur ;
-- origine de la donnée ;
-- niveau de confiance : `demo`, `confirmed`, `estimated`, `unknown`.
+## Intégrations automatiques éventuelles
 
-La plateforme, le mode et le type d’offre sont trois dimensions indépendantes. Par exemple, Uber Eats et Deliveroo peuvent porter des offres de repas ou de courses ; une offre peut être livrée ou retirée lorsque le service concerné le permet. Too Good To Go est modélisé dans le prototype principalement comme retrait anti-gaspi. Le Fourgon est modélisé comme courses livrées.
+Une API, un flux marchand ou un autre accès ne peut être ajouté que si sa documentation et les autorisations couvrent explicitement l’usage du comparateur, y compris l’affichage avec des concurrents. Aucun scraping, contournement de l’application ou collecte d’identifiants tiers n’est prévu. En l’absence d’autorisation, la saisie manuelle reste la seule source.
 
-### Préférences utilisateur
+## Suites possibles
 
-Au MVP, stocker localement dans le navigateur :
-
-- plateformes utilisées ;
-- déclaration Uber One oui/non ;
-- déclaration Deliveroo Plus oui/non ;
-- favoris ;
-- filtres habituels si cette persistance devient utile.
-
-Aucune donnée d’authentification des plateformes tierces n’est collectée.
-
-## 3. Sources autorisées
-
-Chaque source de données devra déclarer son type :
-
-- `manual` : saisie interne ou partenaire ;
-- `merchant_feed` : flux fourni par l’établissement ;
-- `official_api` : API officiellement accessible pour l’usage concerné ;
-- `partner_api` : intégration contractuelle ;
-- `public_licensed_data` : source publique réutilisable avec licence compatible.
-
-Il n’existe volontairement aucun adaptateur `scraper`.
-
-## 4. Flux MVP
-
-1. L’utilisateur saisit une ville, un quartier, un établissement, un service ou une catégorie.
-2. Le site affiche les entrées connues correspondant à la recherche.
-3. L’utilisateur peut filtrer indépendamment la plateforme, le mode `Livraison` / `Retrait` et le type `Repas` / `Courses` / `Anti-gaspi`.
-4. Les offres disponibles sont comparées sans fabriquer de valeur manquante.
-5. Les abonnements déclarés restent informatifs tant qu’aucune donnée autorisée ne permet d’appliquer un avantage réel.
-6. Le site affiche clairement ce qui est démonstration, confirmé, estimé ou inconnu.
-7. Le bouton Commander ouvre uniquement une URL officielle HTTPS vérifiée et autorisée.
-8. Le prix final et les avantages éventuels sont confirmés dans le parcours officiel du service.
-
-## 5. Backend futur
-
-Quand les premières données réelles seront disponibles, ajouter un backend léger derrière une API interne, par exemple :
-
-- `GET /api/restaurants` ou une ressource plus générique si le périmètre courses est conservé ;
-- `GET /api/restaurants/{id}` ;
-- `GET /api/offers?restaurant={id}` ;
-- `POST /api/favorites`.
-
-Avant de figer l’API, renommer éventuellement la ressource `restaurants` en `merchants`/`places` pour refléter les commerces et services non-restaurants.
-
-Les clés API et secrets restent hors du webroot et ne sont jamais commités.
-
-## 6. Préparation de l’application mobile
-
-Le futur client mobile devra consommer la même API et le même modèle normalisé. Les règles de comparaison, de classement et de transparence doivent être documentées indépendamment de l’interface web.
-
-
-## 7. Questionnaire et résultats
-
-Le questionnaire utilise un stockage SQLite privé et ne partage pas sa table de réponses avec la liste e-mail de test.
-
-### Identité et reprise
-
-- sans e-mail : un jeton aléatoire local permet la reprise sur le même appareil ;
-- avec e-mail : l’adresse normalisée sert uniquement à produire une clé HMAC de recherche ; l’adresse nécessaire aux rappels/OTP est conservée chiffrée ;
-- OTP : 6 chiffres, hashé en base, usage unique, expiration 15 minutes, cinq tentatives maximum ;
-- session après OTP : jeton aléatoire hashé en base, expiration une heure.
-
-### Versioning
-
-Une participation incomplète est complétée en place. Dès qu’une version exploitable existe, une modification des réponses ou du schéma visible crée une version suivante. Les versions anciennes restent internes ; l’interface ne montre que les différences avec la version immédiatement précédente.
-
-Chaque question possède un identifiant stable, une révision de formulation, une révision de choix et un statut essentielle/facultative. Une reformulation exige une revalidation explicite. Une question supprimée reste dans les anciennes versions mais n’est plus rendue ni comparée côté utilisateur.
-
-### Exploitabilité
-
-Une participation est exploitable seulement lorsque toutes les questions essentielles actives sont renseignées et les éventuelles reformulations essentielles revalidées. Les analyses et résultats utilisent uniquement la version active et exploitable de chaque répondant.
-
-Les résultats publics sont des agrégats de choix, accessibles aux répondants éligibles à partir de sept participations exploitables. Les réponses libres sont exclues de cette page.
+1. Tester la saisie et la comparaison sur un panier réel.
+2. Corriger l’ergonomie et vérifier le besoin de synchronisation.
+3. Demander un accès écrit aux plateformes si l’automatisation reste nécessaire.
+4. Décider ensuite si un backend ou une synchronisation multi-appareil apporte une valeur suffisante.
