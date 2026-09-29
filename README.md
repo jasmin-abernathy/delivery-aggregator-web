@@ -1,52 +1,37 @@
-# delivery-aggregator-web
+# Sans Effort
 
-MVP web d’agrégation et de comparaison de services de livraison de repas.
+Comparateur personnel pour relever et comparer les offres réellement affichées dans Uber Eats et Deliveroo.
 
-## Objectif
+## Ce que le prototype fait
 
-Construire d’abord une interface web unifiée permettant de :
+- ouvre les sites officiels pour consulter les offres dans les applications ou le navigateur ;
+- enregistre manuellement le total affiché avant paiement, le délai, les frais/promotions et le contenu du panier ;
+- regroupe les relevés par nom de comparaison, commerce, mode (livraison/retrait) et secteur facultatif ;
+- met en évidence le relevé le moins cher lorsque les deux plateformes ont été relevées dans les deux dernières heures ;
+- conserve jusqu’à 100 relevés dans le `localStorage` de l’appareil, avec filtre et suppression individuelle.
 
-- rechercher et comparer des établissements présents sur plusieurs plateformes ;
-- enregistrer les préférences de l’utilisateur ;
-- indiquer si l’utilisateur dispose d’un abonnement type Uber One / Deliveroo Plus afin d’adapter l’affichage et les estimations ;
-- comparer de façon transparente prix, frais, délais et avantages lorsque les données sont disponibles légalement ;
-- rediriger vers le checkout officiel de la plateforme choisie afin que les avantages réels du compte utilisateur s’y appliquent ;
-- conserver un cœur métier réutilisable plus tard par une PWA puis une application mobile.
+Le prix saisi vient de l’utilisateur et n’est pas vérifié par Sans Effort. Les relevés deviennent obsolètes pour la comparaison après deux heures. Le prix final, les frais et les avantages d’abonnement doivent toujours être confirmés dans l’application avant la commande.
 
-## Principes non négociables du MVP
+## Ce que le prototype ne fait pas
 
-- Aucun scraping des interfaces grand public Uber Eats ou Deliveroo.
-- Aucun mot de passe Uber/Deliveroo collecté par le projet.
-- Aucun contournement du checkout officiel.
-- Les abonnements sont d’abord des préférences déclarées par l’utilisateur, pas des droits vérifiés par une API tierce inexistante.
-- Toute estimation doit être clairement distinguée d’un prix/frais confirmé par la plateforme officielle.
-- Les noms des plateformes peuvent servir à identifier les services comparés, sans laisser entendre une affiliation ou un partenariat inexistant.
+Le prototype ne lit pas les applications, ne récupère pas automatiquement leurs prix, n’utilise pas d’identifiants/cookies de comptes et ne passe aucune commande. Il n’affiche ni restaurant ni tarif de démonstration. Il n’existe pas d’API publique de découverte consommateur documentée pour alimenter ici un comparateur ; une automatisation demanderait une autorisation adaptée des plateformes.
 
-## Structure initiale
+## Lancer en local
 
-```text
-public/
-  index.html          Prototype web déployable immédiatement
+Aucune dépendance ni étape de build n’est nécessaire. Depuis la racine du dépôt :
 
-docs/
-  ARCHITECTURE.md     Architecture cible et modèle de données
-  LEGAL-GUARDRAILS.md Contraintes à préserver pendant le développement
+```bash
+python3 -m http.server 8080 --directory public
 ```
 
-## Trajectoire
+Ouvre ensuite `http://127.0.0.1:8080/`. Le formulaire et la comparaison sont utilisables sans backend. Les données restent dans le navigateur actuel ; elles ne sont pas synchronisées entre appareils.
 
-1. Prototype web statique et UX.
-2. Modèle normalisé d’établissements/offres et données de démonstration.
-3. Deep links vers les plateformes officielles.
-4. Sources de données autorisées : saisie partenaire, flux commerçants, API officielles accessibles.
-5. Backend léger et comptes utilisateurs si nécessaire.
-6. PWA installable.
-7. Application mobile réutilisant le même modèle métier et les mêmes APIs.
+## Confidentialité et déploiement
 
-## Déploiement du prototype
+Les relevés demeurent dans le stockage local du navigateur. Effacer les données du site dans le navigateur les supprime. N’enregistre pas de données personnelles dans les notes. Le prototype ne requiert aucun secret serveur ni permission de compte tiers.
 
-Le contenu de `public/` peut être servi tel quel par un hébergement web classique. Aucun secret ni token ne doit être placé dans ce dossier.
+La branche de travail n’est pas fusionnée ni déployée par ce changement. Vérifier l’affichage mobile et desktop, la politique de confidentialité du site hôte et les liens officiels avant publication.
 
-## Statut
+## Questionnaire
 
-Phase 0 — dépôt et fondations du MVP web.
+Les anciens fichiers de questionnaire restent hors du parcours principal et en pause : tant que la comparaison de données réelles ne sera pas testable, les retours sur une maquette fictive ne sont pas considérés utiles pour orienter le produit.

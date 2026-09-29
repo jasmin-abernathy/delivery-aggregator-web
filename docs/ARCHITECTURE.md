@@ -1,82 +1,38 @@
-# Architecture cible — MVP web
+# Architecture de la première version utilisable
 
-## 1. Stratégie générale
+## Parcours actuel
 
-Le projet commence comme site web responsive, puis pourra devenir PWA et enfin application mobile sans jeter le modèle métier.
+Sans Effort est un comparateur personnel local. L’utilisateur consulte lui-même les offres dans Uber Eats et Deliveroo, puis saisit les totaux et délais visibles dans leurs parcours officiels avant paiement. Le navigateur regroupe les saisies qui ont le même nom de comparaison, le même commerce et le même mode (livraison ou retrait). Un secteur facultatif peut aussi distinguer les observations sans demander d’adresse précise.
 
-Le frontend ne doit jamais dépendre directement d’une structure de données propre à Uber Eats ou Deliveroo. Toute donnée externe passe par un adaptateur et est normalisée.
+Le comparateur ne lit pas les applications ou leurs pages, ne se connecte pas aux comptes et ne reçoit aucune donnée de serveur. Les entrées sont sauvegardées dans `localStorage`, jusqu’à 100 par navigateur. Les valeurs restent celles saisies; elles ne sont ni estimées ni recalculées. Pour comparer, une offre de chaque plateforme doit avoir été relevée au cours des deux dernières heures.
 
-## 2. Modèle normalisé minimal
+## Modèle d’un relevé
 
-### Établissement
+- identifiant local aléatoire ;
+- nom donné à la comparaison ;
+- nom du commerce ;
+- plateforme (`uber-eats` ou `deliveroo`) ;
+- mode (`delivery` ou `pickup`) ;
+- secteur facultatif, saisi sans adresse précise ;
+- total affiché avant paiement, en euros ;
+- délai annoncé, facultatif ;
+- détail des frais/promotions et contenu du panier, facultatifs ;
+- lien HTTPS officiel de l’offre, facultatif ;
+- heure d’observation.
 
-- `id` interne stable
-- nom
-- adresse / zone
-- coordonnées si disponibles légalement
-- catégories / cuisines
-- image autorisée ou image interne
-- plateformes disponibles
+La saisie ne prouve pas que deux paniers sont identiques. L’interface invite l’utilisateur à vérifier le contenu, l’adresse, les frais et les conditions d’abonnement dans les applications. Aucun prix final garanti n’est annoncé.
 
-### Offre par plateforme
+## Stockage et sécurité
 
-- plateforme
-- identifiant externe si usage autorisé
-- URL / deep link officiel
-- prix ou fourchette connue
-- frais de livraison connus
-- frais de service connus
-- délai estimé
-- minimum de commande
-- horodatage de fraîcheur
-- origine de la donnée
-- niveau de confiance : `confirmed`, `estimated`, `unknown`
+Pas de compte ni d’API serveur dans cette version. Les données ne quittent pas le navigateur et ne sont pas synchronisées entre appareils. Le code valide les domaines des liens optionnels et échappe les valeurs saisies avant leur rendu HTML.
 
-### Préférences utilisateur
+## Intégrations automatiques éventuelles
 
-Au MVP, stocker localement dans le navigateur :
+Une API, un flux marchand ou un autre accès ne peut être ajouté que si sa documentation et les autorisations couvrent explicitement l’usage du comparateur, y compris l’affichage avec des concurrents. Aucun scraping, contournement de l’application ou collecte d’identifiants tiers n’est prévu. En l’absence d’autorisation, la saisie manuelle reste la seule source.
 
-- plateformes utilisées ;
-- déclaration Uber One oui/non ;
-- déclaration Deliveroo Plus oui/non ;
-- favoris ;
-- filtres habituels.
+## Suites possibles
 
-Aucune donnée d’authentification des plateformes tierces n’est collectée.
-
-## 3. Sources autorisées
-
-Chaque source de données devra déclarer son type :
-
-- `manual` : saisie interne ou partenaire ;
-- `merchant_feed` : flux fourni par l’établissement ;
-- `official_api` : API officiellement accessible pour l’usage concerné ;
-- `partner_api` : intégration contractuelle ;
-- `public_licensed_data` : source publique réutilisable avec licence compatible.
-
-Il n’existe volontairement aucun adaptateur `scraper`.
-
-## 4. Flux MVP
-
-1. L’utilisateur saisit une adresse ou une zone.
-2. Le site affiche les établissements connus dans cette zone.
-3. Les offres disponibles sont comparées.
-4. Les abonnements déclarés servent uniquement à personnaliser le classement ou l’explication des avantages potentiels.
-5. Le site affiche clairement ce qui est confirmé et ce qui est estimé.
-6. Le bouton Commander ouvre la plateforme officielle choisie.
-7. Le prix final et les avantages d’abonnement sont confirmés dans le checkout officiel.
-
-## 5. Backend futur
-
-Quand les premières données réelles seront disponibles, ajouter un backend léger derrière une API interne, par exemple :
-
-- `GET /api/restaurants`
-- `GET /api/restaurants/{id}`
-- `GET /api/offers?restaurant={id}`
-- `POST /api/favorites`
-
-Les clés API et secrets restent hors du webroot et ne sont jamais commités.
-
-## 6. Préparation de l’application mobile
-
-Le futur client mobile devra consommer la même API et le même modèle normalisé. Les règles de comparaison, de classement et de transparence doivent être documentées indépendamment de l’interface web.
+1. Tester la saisie et la comparaison sur un panier réel.
+2. Corriger l’ergonomie et vérifier le besoin de synchronisation.
+3. Demander un accès écrit aux plateformes si l’automatisation reste nécessaire.
+4. Décider ensuite si un backend ou une synchronisation multi-appareil apporte une valeur suffisante.

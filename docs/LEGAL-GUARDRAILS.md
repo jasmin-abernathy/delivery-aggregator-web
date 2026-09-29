@@ -1,41 +1,24 @@
-# Garde-fous juridiques et produit
+# Garde-fous produit et données
 
-Dernière revue de principe : 4 septembre 2026.
+Revue de principe : 29 septembre 2026. Ce document est une règle de conception, pas un avis juridique.
 
-Ce document ne remplace pas un avis juridique. Il sert de contrat produit interne pour éviter d’introduire par commodité technique un fonctionnement incompatible avec les conditions des plateformes ou les règles applicables.
+## Fonctionnement de la version actuelle
 
-## Autorisé / visé pour le MVP
+- L’utilisateur relève lui-même dans Uber Eats et Deliveroo les prix, délais et frais affichés, puis les saisit dans Sans Effort.
+- L’application ne scrape pas les interfaces, n’automatise pas la connexion et ne lit ni mot de passe, cookie, session ou jeton tiers.
+- Les relevés sont conservés localement dans le navigateur; aucun compte ni serveur n’est requis.
+- Une saisie est présentée comme une observation utilisateur, pas comme une donnée certifiée par la plateforme.
+- Le prix, les frais, la disponibilité et les avantages d’abonnement sont à confirmer dans l’application officielle avant paiement.
+- Les liens sortants ne peuvent viser que les domaines HTTPS officiels Uber Eats ou Deliveroo.
 
-- Comparer des données obtenues légalement et dont la réutilisation est permise.
-- Permettre à l’utilisateur de déclarer qu’il dispose d’un abonnement de plateforme afin de personnaliser l’interface.
-- Présenter des estimations clairement identifiées comme telles.
-- Rediriger vers la page ou l’application officielle pour finaliser la commande.
-- Utiliser les noms des services pour les identifier de façon descriptive, sans suggérer de partenariat.
-- Ajouter ultérieurement des intégrations officielles si les droits/API/accords correspondants sont obtenus.
+## Évolution des sources
 
-## À ne pas implémenter sans accord explicite adapté
+Toute intégration automatique doit être autorisée par les conditions et l’accord applicables à l’usage précis, y compris la comparaison avec des concurrents. L’existence d’une API, d’un accès partenaire ou d’un flux marchand ne vaut pas à elle seule autorisation de réutiliser les données dans un comparateur consommateur. Aucun accès ne sera contourné ni simulé avec des identifiants d’utilisateur.
 
-- Scraping automatisé des interfaces grand public Uber Eats ou Deliveroo.
-- Collecte des identifiants ou mots de passe des comptes tiers.
-- Automatisation de connexion ou de commande dans les comptes utilisateurs.
-- Réutilisation d’un avantage Uber One / Deliveroo Plus dans un checkout tiers comme s’il était officiellement reconnu.
-- Copie fidèle de l’interface, des textes, illustrations, logos ou assets propriétaires.
-- Présentation laissant croire que le service est affilié, certifié ou partenaire des plateformes si ce n’est pas le cas.
+## Confidentialité
 
-## Transparence du comparateur
+Les données du formulaire sont enregistrées dans le stockage local du navigateur et ne sont pas transmises au projet. L’utilisateur peut supprimer chaque observation depuis l’interface ou les données du site depuis son navigateur. Ne pas ajouter de données personnelles dans les noms ou notes.
 
-L’interface devra afficher de façon intelligible :
+## Présentation
 
-- la source et la fraîcheur des informations importantes ;
-- ce qui est confirmé, estimé ou inconnu ;
-- les principaux critères de classement ;
-- la présence éventuelle d’un référencement rémunéré ;
-- le fait que le prix final, les frais et les avantages d’abonnement sont confirmés sur la plateforme officielle lorsque le checkout y est effectué.
-
-## Données personnelles
-
-Au début, privilégier le stockage local pour les préférences non sensibles. Si des comptes sont ajoutés plus tard : minimisation, finalités claires, sécurité, durées de conservation limitées et suppression/export devront être prévus dès la conception.
-
-## Paiement
-
-Le MVP ne collecte pas le paiement des commandes. Si un paiement marketplace est ajouté ultérieurement, l’architecture devra passer par un prestataire de services de paiement adapté et faire l’objet d’une analyse réglementaire dédiée.
+Sans Effort est un projet indépendant. Les noms Uber Eats et Deliveroo sont employés pour identifier les plateformes. Aucun partenariat, affiliation ou validation par ces entreprises n’est revendiqué.
