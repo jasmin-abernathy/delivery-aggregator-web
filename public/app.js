@@ -35,6 +35,11 @@
       && Number.isFinite(item.total) && item.total > 0 && Number.isFinite(Date.parse(item.createdAt));
   }
 
+  function isFresh(item) {
+    const age = Date.now() - Date.parse(item.createdAt);
+    return age >= 0 && age <= FRESH_MS;
+  }
+
   function persist() {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(observations));
@@ -59,7 +64,8 @@
     try {
       const url = new URL(value);
       const hosts = PLATFORMS[platform].hosts;
-      if (url.protocol !== 'https:' || !hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) return '';
+      if (url.protocol !== 'https:' || url.username || url.password || url.port
+        || !hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`))) return '';
       return url.href;
     } catch (_) {
       return '';
@@ -103,7 +109,7 @@
     } else if (!observations.length) {
       emptyState.innerHTML = '<h3>Pas encore de relevé</h3><p>Ouvre une des applis, compose un panier réel sans passer commande, puis saisis son total ci-dessus. Aucun prix d’exemple n’est affiché.</p>';
     }
-    const fresh = observations.filter((item) => Date.now() - Date.parse(item.createdAt) <= FRESH_MS);
+    const fresh = observations.filter(isFresh);
     comparisonStatus.textContent = fresh.length
       ? `${observations.length} relevé${observations.length === 1 ? '' : 's'} enregistré${observations.length === 1 ? '' : 's'} · ${fresh.length} encore valable${fresh.length === 1 ? '' : 's'} pour comparer (moins de 2 h).`
       : observations.length
@@ -112,13 +118,13 @@
   }
 
   function renderGroup(items) {
-    const fresh = items.filter((item) => Date.now() - Date.parse(item.createdAt) <= FRESH_MS);
+    const fresh = items.filter(isFresh);
     const hasBothPlatforms = new Set(fresh.map((item) => item.platform)).size === 2;
     const cheapestId = hasBothPlatforms ? fresh.reduce((lowest, item) => item.total < lowest.total ? item : lowest).id : null;
     const spread = hasBothPlatforms ? Math.max(...fresh.map((item) => item.total)) - Math.min(...fresh.map((item) => item.total)) : null;
     const first = items[0];
     const cards = items.map((item) => {
-      const stale = Date.now() - Date.parse(item.createdAt) > FRESH_MS;
+      const stale = !isFresh(item);
       const link = safeOfferUrl(item.url, item.platform);
       const details = [item.basket, item.fees].filter(Boolean).map(escapeHtml).join(' · ');
       return `<article class="observation-card${item.id === cheapestId ? ' is-cheapest' : ''}">
