@@ -23,6 +23,8 @@ Construire d’abord une interface web unifiée permettant de :
 - Toute estimation doit être clairement distinguée d’un prix/frais confirmé par la plateforme officielle.
 - Les noms des plateformes servent uniquement à identifier les services comparés, sans laisser entendre une affiliation ou un partenariat inexistant.
 - Une valeur absente reste absente : le prototype n’invente pas un total ou un classement pour combler des données manquantes.
+- L’inscription facultative aux nouvelles de Sans Effort exige une case de consentement explicite et un test anti-robot local ; il n’y a pas de double opt-in.
+- Aucun CAPTCHA tiers, aucune clé Mailjet et aucun secret Potager ne sont exposés au navigateur.
 
 ## Structure du prototype
 
@@ -31,6 +33,8 @@ public/
   index.html                Structure accessible de l’interface
   styles.css                Mise en page responsive et styles
   app.js                    Recherche, filtres, favoris et stockage local
+  api/
+    newsletter.php          Consentement + test anti-robot + connecteur Potager Mailing
   data/
     demo-restaurants.js     Fixtures explicitement fictives
 
@@ -41,7 +45,7 @@ docs/
 
 ## Tester localement
 
-Aucune installation ni étape de build n’est nécessaire. Le dossier `public/` doit simplement être servi par un serveur HTTP statique.
+Aucune installation ni étape de build n’est nécessaire pour le comparateur. Le dossier `public/` doit simplement être servi par un serveur HTTP.
 
 Exemples, selon les outils déjà disponibles sur la machine :
 
@@ -49,7 +53,7 @@ Exemples, selon les outils déjà disponibles sur la machine :
 python3 -m http.server 8080 --directory public
 ```
 
-ou :
+ou, pour pouvoir également exécuter le connecteur PHP :
 
 ```bash
 php -S 127.0.0.1:8080 -t public
@@ -57,7 +61,9 @@ php -S 127.0.0.1:8080 -t public
 
 Puis ouvrir `http://127.0.0.1:8080/`.
 
-Le prototype fonctionne sans API externe et sans secret. Les trois fonctionnalités persistées — favoris, déclaration Uber One et déclaration Deliveroo Plus — utilisent `localStorage` avec repli gracieux si le stockage est indisponible.
+Le comparateur lui-même fonctionne sans API externe et sans secret. Les préférences locales utilisent `localStorage` avec repli gracieux si le stockage est indisponible.
+
+Le connecteur facultatif d’inscription e-mail est différent : il nécessite côté serveur le secret partagé `SANS_EFFORT_MAILING_SECRET` (ou le fichier privé correspondant), jamais dans `public/`. Le formulaire public doit récupérer un petit défi anti-robot auprès de `/api/newsletter.php`, exiger sa résolution et une case de consentement avant de transmettre l’adresse à la liste privée `sans-effort-testers` du Potager Mailing.
 
 ## Données de démonstration
 
@@ -79,7 +85,7 @@ Le statut `confirmed` ne doit jamais être appliqué à une fixture. Les boutons
 
 Le contenu de `public/` peut être servi tel quel par un hébergement web classique. Aucun secret ni token ne doit être placé dans ce dossier.
 
-Aucun déploiement public n’est déduit automatiquement de ce dépôt : la cible et le mécanisme de publication doivent être validés avant toute mise en ligne.
+Le prototype public visé est `sanseffort.lepotager.org`. Le mécanisme de déploiement reste à brancher explicitement ; aucune mise en ligne n’est déduite automatiquement du dépôt.
 
 ## Statut
 
