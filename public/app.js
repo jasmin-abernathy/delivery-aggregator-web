@@ -32,6 +32,7 @@
   function isValidObservation(item) {
     return item && typeof item.id === 'string' && typeof item.scenario === 'string'
       && typeof item.merchant === 'string' && Object.hasOwn(PLATFORMS, item.platform)
+      && ['delivery', 'pickup'].includes(item.mode)
       && Number.isFinite(item.total) && item.total > 0 && Number.isFinite(Date.parse(item.createdAt));
   }
 
@@ -85,7 +86,7 @@
   }
 
   function groupKey(item) {
-    return `${normalize(item.scenario)}\u0000${normalize(item.merchant)}`;
+    return `${normalize(item.scenario)}\u0000${normalize(item.merchant)}\u0000${item.mode}\u0000${normalize(item.area || '')}`;
   }
 
   function render() {
@@ -98,7 +99,7 @@
     });
 
     const matching = [...groups.values()].filter((items) => {
-      const text = normalize(`${items[0].scenario} ${items[0].merchant}`);
+      const text = normalize(`${items[0].scenario} ${items[0].merchant} ${items[0].area || ''}`);
       return !query || text.includes(query);
     });
     list.innerHTML = matching.map(renderGroup).join('');
@@ -138,8 +139,10 @@
     const compareNote = hasBothPlatforms
       ? `<p class="compare-note">${formatMoney(spread)} d’écart entre les relevés récents. Vérifie que le panier et les conditions de livraison sont identiques.</p>`
       : '<p class="compare-note">Ajoute un relevé récent de l’autre plateforme pour comparer.</p>';
-    return `<section class="comparison-group" aria-label="${escapeHtml(first.scenario)} chez ${escapeHtml(first.merchant)}">
-      <div class="group-heading"><div><h3>${escapeHtml(first.scenario)}</h3><p>${escapeHtml(first.merchant)}</p></div><span class="group-count">${items.length} relevé${items.length === 1 ? '' : 's'}</span></div>
+    const modeLabel = first.mode === 'pickup' ? 'Retrait' : 'Livraison';
+    const areaLabel = first.area ? ` · ${escapeHtml(first.area)}` : '';
+    return `<section class="comparison-group" aria-label="${escapeHtml(first.scenario)} chez ${escapeHtml(first.merchant)}, ${modeLabel}${areaLabel}">
+      <div class="group-heading"><div><h3>${escapeHtml(first.scenario)}</h3><p>${escapeHtml(first.merchant)} · ${modeLabel}${areaLabel}</p></div><span class="group-count">${items.length} relevé${items.length === 1 ? '' : 's'}</span></div>
       <div class="observation-grid">${cards}</div>${compareNote}</section>`;
   }
 
@@ -150,12 +153,14 @@
     const scenario = String(data.get('scenario') || '').trim();
     const merchant = String(data.get('merchant') || '').trim();
     const platform = String(data.get('platform') || '');
+    const mode = String(data.get('mode') || '');
+    const area = String(data.get('area') || '').trim();
     const total = Number(data.get('total'));
     const etaValue = String(data.get('eta') || '').trim();
     const eta = etaValue ? Number(etaValue) : null;
     const rawUrl = String(data.get('url') || '').trim();
     const url = rawUrl ? safeOfferUrl(rawUrl, platform) : '';
-    if (!scenario || !merchant || !Object.hasOwn(PLATFORMS, platform) || !Number.isFinite(total) || total <= 0 || total > 10000) {
+    if (!scenario || !merchant || !Object.hasOwn(PLATFORMS, platform) || !['delivery', 'pickup'].includes(mode) || !Number.isFinite(total) || total <= 0 || total > 10000) {
       formError.textContent = 'Complète le nom de comparaison, le commerce et un total supérieur à 0 €.';
       formError.hidden = false;
       return;
@@ -172,7 +177,7 @@
     }
     observations.unshift({
       id: window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      scenario, merchant, platform, total: Math.round(total * 100) / 100, eta,
+      scenario, merchant, platform, mode, area, total: Math.round(total * 100) / 100, eta,
       fees: String(data.get('fees') || '').trim(), basket: String(data.get('basket') || '').trim(),
       url, createdAt: new Date().toISOString()
     });
