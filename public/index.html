@@ -24,7 +24,7 @@
     <section class="howto" aria-labelledby="howto-title">
       <h2 id="howto-title">Comment comparer</h2>
       <ol>
-        <li>Compose le même panier dans chaque appli, sans payer.</li>
+        <li>Compose le même panier, pour le même secteur et le même mode, sans payer.</li>
         <li>Relève le total final affiché avant paiement et le délai annoncé.</li>
         <li>Enregistre un relevé par plateforme. Le comparateur signale le moins cher parmi les relevés récents.</li>
       </ol>
@@ -52,6 +52,16 @@
               <option value="uber-eats">Uber Eats</option>
               <option value="deliveroo">Deliveroo</option>
             </select>
+          </label>
+          <label class="field">Mode
+            <select name="mode" required>
+              <option value="delivery">Livraison</option>
+              <option value="pickup">Retrait</option>
+            </select>
+          </label>
+          <label class="field">Secteur (facultatif)
+            <input name="area" maxlength="60" placeholder="Ex. Centre-ville" autocomplete="off">
+            <span class="help">N’indique pas ton adresse exacte. Utilise le même secteur pour comparer.</span>
           </label>
           <label class="field">Total affiché avant paiement (€)
             <input name="total" type="number" required min="0.01" max="10000" step="0.01" inputmode="decimal" placeholder="24,90">
